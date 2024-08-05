@@ -1,6 +1,9 @@
 # Url Save State
 Save and read the state of a form or individual inputs to and from the URL query string.
 
+### Add to your project
+`<script src="https://cdn.jsdelivr.net/gh/camerontbelt/UrlSaveState/UrlSaveState.js"></script>`
+
 # Elements
 ### form
 `data-watch=[form|input]`
