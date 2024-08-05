@@ -52,7 +52,7 @@ function AddOnChangeEvent(input) {
 }
 
 function RunOnloadFunctions() {
-    var forms = document.querySelectorAll("[data-watch='form']");
+    var forms = document.querySelectorAll("form");
     forms.forEach(form => {
         var onload = form.getAttribute("data-watch-onload");
         if (onload !== null) {
