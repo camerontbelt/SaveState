@@ -10,7 +10,7 @@ Use `data-watch="form"` at the form level, for all inputs on a form.
 Use this if you want to perform some action, such as getting results from form search  function.
 
 ### input
-Use `data-watch="input"` for specific inputs on a form.
+Use `data-watch="input"` for specific inputs on a form. Can also be used on selects. 
 
 ### select
 `data-watch-select=[value|label]`
