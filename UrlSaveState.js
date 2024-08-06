@@ -1,21 +1,22 @@
-var queryArgs = [];
+var queryArgs = {};
 
 window.addEventListener('load', function () {
     UpdateFormValuesFromUrl();
+    UpdateFormValuesFromCache();
     AddOnChangeEvents();
     RunOnloadFunctions();
 });
 
 function UpdateArgs() {
-    queryArgs = [];
-    var forms = document.querySelectorAll("[data-watch='form']");
+    queryArgs = {};
+    var forms = document.querySelectorAll("[data-watch-url='form'],[data-watch-cache='form']");
     forms.forEach(form => {
         Array.from(form.elements).forEach(element => {
             UpdateQueryArgs(element);
         });
     });
     
-    var inputs = document.querySelectorAll("[data-watch='input']");
+    var inputs = document.querySelectorAll("[data-watch-url='input'],[data-watch-cache='input']");
     inputs.forEach(input => {
         UpdateQueryArgs(input);
     });
@@ -31,21 +32,40 @@ function UpdateQueryArgs(element) {
 }
 
 function AddOnChangeEvents() {
-    var forms = document.querySelectorAll("[data-watch='form']");
-    if (forms.count === 0) forms = document.querySelectorAll("[data-watch='input']");
+    var forms = document.querySelectorAll("[data-watch-url='form']");
+    if (forms.count === 0) forms = document.querySelectorAll("[data-watch-url='input']");
     forms.forEach(form => {        
         Array.from(form.elements).forEach(element => {
-            AddOnChangeEvent(element);
+            AddOnChangeEventUrl(element);
         });
     });
 
-    var inputs = document.querySelectorAll("[data-watch='input']");
+    var inputs = document.querySelectorAll("[data-watch-url='input']");
     inputs.forEach(input => {
-        AddOnChangeEvent(input);
+        AddOnChangeEventUrl(input);
+    });
+
+    var forms = document.querySelectorAll("[data-watch-cache='form']");
+    if (forms.count === 0) forms = document.querySelectorAll("[data-watch-cache='input']");
+    forms.forEach(form => {        
+        Array.from(form.elements).forEach(element => {
+            AddOnChangeEventCache(element);
+        });
+    });
+
+    var inputs = document.querySelectorAll("[data-watch-cache='input']");
+    inputs.forEach(input => {
+        AddOnChangeEventCache(input);
     });
 }
 
-function AddOnChangeEvent(input) {
+function AddOnChangeEventCache(input) {
+    if (input.nodeName === 'INPUT' || input.nodeName === 'SELECT') {
+        input.setAttribute('onchange', 'UpdateCache()');
+    }
+}
+
+function AddOnChangeEventUrl(input) {
     if (input.nodeName === 'INPUT' || input.nodeName === 'SELECT') {
         input.setAttribute('onchange', 'UpdateUrl()');
     }
@@ -79,6 +99,25 @@ function UpdateFormValuesFromUrl() {
         }
     }
 }
+function UpdateFormValuesFromCache() {
+    const urlParams = new URLSearchParams(localStorage.getItem(window.location.pathname));
+    queryArgs = Array.from(urlParams.entries());
+    for (const [key, value] of queryArgs) {
+        if (key === 'null' || key === '') continue;
+        var element = document.getElementById(key);
+        if (element.nodeName === 'INPUT') element.value = value;
+        if (element.nodeName === 'SELECT') {
+            //add an observer so when the list is loaded for the select, it picks the correct one in the list from the url
+            const observer = new MutationObserver((mutations) => {
+                if (element.options.length > 0) {
+                    if (element.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(element, value);
+                    if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
+                }
+            });
+            observer.observe(element, { childList: true, subtree: true });
+        }
+    }
+}
 
 function UpdateUrl() {
     var loc = window.location;
@@ -86,6 +125,14 @@ function UpdateUrl() {
     UpdateArgs();
     var queryString = GetParams(queryArgs);
     if(queryString !== '') history.pushState(null, '', `${path}?${queryString.toString()}`)
+}
+
+function UpdateCache() {
+    var loc = window.location;
+    var path = loc.pathname;
+    UpdateArgs();
+    var queryString = GetParams(queryArgs);
+    localStorage.setItem(path, queryString);
 }
 
 function GetParams(queryArgs) {
