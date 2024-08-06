@@ -1,3 +1,13 @@
+/*
+Copyright (c) 2024 Cameron Belt
+
+This software is provided under the terms of the MIT license.
+For the full license text, please see the LICENSE file in the root directory
+of this software distribution or visit:
+https://github.com/aws/mit-0
+
+This library is for use on forms or inputs to save and read the state of those inputs to either the URL or browser cache. 
+*/
 var queryArgs = {};
 
 window.addEventListener('load', function () {
