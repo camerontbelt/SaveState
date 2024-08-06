@@ -83,9 +83,19 @@ function AddOnChangeEventUrl(input) {
 }
 
 function RunOnloadFunctions() {
-    var forms = document.querySelectorAll("form,button,div");
-    forms.forEach(form => {
-        var onload = form.getAttribute("data-watch-onload");
+    var forms = document.querySelectorAll("form");
+    forms.forEach(el => {
+        var onload = el.getAttribute("data-watch-onload");
+        if (onload !== null) {
+            if (onload === 'form') el.submit();
+            else eval(onload).call();
+        }
+    });
+
+    var divsAndButtons = document.querySelectorAll("div,button");
+
+    divsAndButtons.forEach(el => {
+        var onload = el.getAttribute("data-watch-onload");
         if (onload !== null) {
             eval(onload).call();
         }
