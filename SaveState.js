@@ -72,13 +72,13 @@ function AddOnChangeEvents() {
 
 function AddOnChangeEventCache(input) {
     if (input.nodeName === 'INPUT' || input.nodeName === 'SELECT') {
-        input.setAttribute('onchange', 'UpdateCache()');
+        appendAttribute(input, 'onchange', 'UpdateCache()');
     }
 }
 
 function AddOnChangeEventUrl(input) {
     if (input.nodeName === 'INPUT' || input.nodeName === 'SELECT') {
-        input.setAttribute('onchange', 'UpdateUrl()');
+        appendAttribute(input, 'onchange', 'UpdateUrl()');
     }
 }
 
@@ -87,8 +87,12 @@ function RunOnloadFunctions() {
     forms.forEach(el => {
         var onload = el.getAttribute("data-watch-onload");
         if (onload !== null) {
-            if (onload === 'form') el.submit();
-            else eval(onload).call();
+            //if (onload === 'form' && document.getElementById("formLoaded").value !== 'true') {//this will cause an infinite reload loop. As of right now there is no solution to this problem.
+            //    document.getElementById("formLoaded").value = 'true';
+            //    el.submit();
+            //}
+            //else
+                eval(onload).call();
         }
     });
 
@@ -199,4 +203,11 @@ function SelectOptionByAttribute2(el, option, attribute) {
             break;
         }
     }
+}
+
+function appendAttribute(el, attributeName, value) {
+    var attribute = el.getAttribute(attributeName);
+    if (attribute !== '') attribute += `;${value};`
+    else attribute = `${value};`
+    el.setAttribute(attributeName, attribute)
 }
