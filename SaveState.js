@@ -36,8 +36,9 @@ function UpdateQueryArgs(element) {
     if (element.nodeName === 'INPUT') queryArgs[element.id] = element.value;
     if (element.nodeName === 'SELECT') {
         if (element.getAttribute('data-watch-select') === 'value') queryArgs[element.id] = element.value;
-        if (element.getAttribute('data-watch-select') === 'label') queryArgs[element.id] =
+        else if (element.getAttribute('data-watch-select') === 'label') queryArgs[element.id] =
             document.getElementById(element.id).options[document.getElementById(element.id).selectedIndex].text;
+        else queryArgs[element.id] = element.value;
     }
 }
 
@@ -82,7 +83,7 @@ function AddOnChangeEventUrl(input) {
 }
 
 function RunOnloadFunctions() {
-    var forms = document.querySelectorAll("form");
+    var forms = document.querySelectorAll("form,button,div");
     forms.forEach(form => {
         var onload = form.getAttribute("data-watch-onload");
         if (onload !== null) {
@@ -93,35 +94,36 @@ function RunOnloadFunctions() {
 
 function UpdateFormValuesFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    queryArgs = Array.from(urlParams.entries());
-    for (const [key, value] of queryArgs) {
-        var element = document.getElementById(key);
-        if (element.nodeName === 'INPUT') element.value = value;
-        if (element.nodeName === 'SELECT') {
-            //add an observer so when the list is loaded for the select, it picks the correct one in the list from the url
-            const observer = new MutationObserver((mutations) => {
-                if (element.options.length > 0) {
-                    if (element.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(element, value);
-                    if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
-                }
-            });
-            observer.observe(element, { childList: true, subtree: true });
-        }
-    }
+    UpdateFormValues(urlParams);
 }
 function UpdateFormValuesFromCache() {
     const urlParams = new URLSearchParams(localStorage.getItem(window.location.pathname));
+    UpdateFormValues(urlParams);
+}
+
+function UpdateFormValues(urlParams) {
     queryArgs = Array.from(urlParams.entries());
     for (const [key, value] of queryArgs) {
         if (key === 'null' || key === '') continue;
         var element = document.getElementById(key);
         if (element.nodeName === 'INPUT') element.value = value;
         if (element.nodeName === 'SELECT') {
+            //Select the value from the list if its loaded with the page.
+            try {
+                if (element.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(element, value);
+                else if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
+                else SelectOptionByValue2(element, value);
+            }
+            catch (error) {
+                console.log(error);
+            }
             //add an observer so when the list is loaded for the select, it picks the correct one in the list from the url
+            //This method is only useful for drop down lists that are loaded after the page loads
             const observer = new MutationObserver((mutations) => {
                 if (element.options.length > 0) {
                     if (element.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(element, value);
-                    if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
+                    else if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
+                    else SelectOptionByValue2(element, value);
                 }
             });
             observer.observe(element, { childList: true, subtree: true });
