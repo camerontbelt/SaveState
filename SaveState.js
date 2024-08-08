@@ -11,11 +11,28 @@ This library is for use on forms or inputs to save and read the state of those i
 var queryArgs = {};
 
 window.addEventListener('load', function () {
+    RunOnloadEventsSelect();
     UpdateFormValuesFromUrl();
     UpdateFormValuesFromCache();
     AddOnChangeEvents();
     RunOnloadFunctions();
 });
+
+function RunOnloadEventsSelect() {
+    var inputs = document.querySelectorAll("[data-watch-select-onload]");
+    inputs.forEach(el => {
+        var onload = el.getAttribute("data-watch-select-onload");
+        if (onload !== null) {
+            var events = onload.split(',');
+            events.forEach(event => {
+                evalWithPromise(event);
+            });
+        }
+    });
+}
+
+//usage: delay(500) - delays 500 milliseconds
+const delay = ms => new Promise(res => setTimeout(res, ms));
 
 function UpdateArgs() {
     queryArgs = {};
@@ -40,6 +57,23 @@ function UpdateQueryArgs(element) {
             document.getElementById(element.id).options[document.getElementById(element.id).selectedIndex].text;
         else queryArgs[element.id] = element.value;
     }
+}
+
+function evalWithPromise(functionString) {
+    return new Promise((resolve, reject) => {
+        try {
+            const result = eval(functionString);
+            if (typeof result === 'function') {
+                Promise.resolve(result.call())
+                    .then(resolve)
+                    .catch(reject);
+            } else {
+                resolve(result);
+            }
+        } catch (error) {
+            reject(error);
+        }
+    });
 }
 
 function AddOnChangeEvents() {
@@ -87,12 +121,15 @@ function RunOnloadFunctions() {
     forms.forEach(el => {
         var onload = el.getAttribute("data-watch-onload");
         if (onload !== null) {
+            var events = onload.split(',');
+            events.forEach(event => {
+                eval(event).call();
+            });
             //if (onload === 'form' && document.getElementById("formLoaded").value !== 'true') {//this will cause an infinite reload loop. As of right now there is no solution to this problem.
             //    document.getElementById("formLoaded").value = 'true';
             //    el.submit();
             //}
             //else
-                eval(onload).call();
         }
     });
 
@@ -110,6 +147,7 @@ function UpdateFormValuesFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     UpdateFormValues(urlParams);
 }
+
 function UpdateFormValuesFromCache() {
     const urlParams = new URLSearchParams(localStorage.getItem(window.location.pathname));
     UpdateFormValues(urlParams);
@@ -134,10 +172,11 @@ function UpdateFormValues(urlParams) {
             //add an observer so when the list is loaded for the select, it picks the correct one in the list from the url
             //This method is only useful for drop down lists that are loaded after the page loads
             const observer = new MutationObserver((mutations) => {
-                if (element.options.length > 0) {
-                    if (element.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(element, value);
-                    else if (element.getAttribute('data-watch-select') === 'label') SelectOption2(element, value);
-                    else SelectOptionByValue2(element, value);
+                var selectElement = mutations[0].target;
+                if (selectElement.options.length > 0) {
+                    if (selectElement.getAttribute('data-watch-select') === 'value') SelectOptionByValue2(selectElement, value);
+                    else if (selectElement.getAttribute('data-watch-select') === 'label') SelectOption2(selectElement, value);
+                    else SelectOptionByValue2(selectElement, value);
                 }
             });
             observer.observe(element, { childList: true, subtree: true });
